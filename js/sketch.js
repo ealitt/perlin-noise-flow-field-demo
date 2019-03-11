@@ -1,5 +1,5 @@
 var start = 0;
-var speed = 0.04;
+var speed = 0.02;
 var inc = 0.005;
 
 function setup(){
