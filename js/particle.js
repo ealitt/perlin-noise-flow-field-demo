@@ -1,8 +1,8 @@
-function Particle() {
+function Particle(maxspeed, opacity, strokeVal) {
   this.pos = createVector(random(width), random(height));
   this.vel = createVector(0, 0);
   this.acc = createVector(0, 0);
-  this.maxspeed = 4;
+  this.maxspeed = maxspeed;
 
   this.prevPos = this.pos.copy();
 
@@ -14,8 +14,8 @@ function Particle() {
   }
 
   this.show = function() {
-    stroke(255, 5);
-    strokeWeight(1);
+    stroke(255, opacity);
+    strokeWeight(strokeVal);
     line(this.pos.x, this.pos.y, this.prevPos.x, this.prevPos.y);
     // point(this.pos.x, this.pos.y);
     this.updatePrev();
