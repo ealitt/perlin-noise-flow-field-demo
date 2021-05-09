@@ -1,34 +1,97 @@
-let scl = 100;
-let maxDiam = 30;
-let xOffset = 60;
-let yOffset = 50;
-let freq = 1;
-let speed = 40;
+var inc = 0.1;
+var scl = 80;
+var cols, rows;
 
-let col = []
+var time = 0;
+var timeInc = 0.001;
+
+var fl;
+var pt;
+var particles = [];
+
+var flowfield;
+
+p5.disableFriendlyErrors = true;
+
+function guiSetup(){
+  fl = new Flowfield();
+  pt = new Particledata();       
+  var gui = new dat.GUI();    // initialize dat gui
+  // gui.add(fl, 'rgb');
+  gui.add(fl, 'pause');
+  gui.add(fl, 'numParticles', 10, 10000, 10).onChange(function(){generateParticles()});
+  gui.add(fl, 'magnitude', 0, 1, 0.1);
+  gui.add(fl, 'clear');
+  var particleVals = gui.addFolder('Particle');
+  particleVals.add(pt, 'maxSpeed', 1, 100, 1).onChange(function(){generateParticles()});
+  particleVals.add(pt, 'opacity', 0, 200, 5).onChange(function(){generateParticles()});
+  particleVals.add(pt, 'stroke', 0, 10, 1).onChange(function(){generateParticles()});
+};
+
+var Flowfield = function() {
+  // this.rgb = false;
+  this.pause = false;
+  this.numParticles = 1000;
+  this.magnitude = 0.7;
+  this.clear = function(){background(0)};
+}
+
+var Particledata = function() {
+  this.maxSpeed = 6;
+  this.opacity = 20;
+  this.stroke = 1;
+}
 
 function setup(){
+  guiSetup();
   createCanvas(windowWidth, windowHeight);
   background(0);
 
   cols = floor(width / scl);
   rows = floor(height / scl);
-  console.log(cols);
-  console.log(rows);
-  console.log(windowWidth);
 
-  col = [random(0, 255), random(0, 255), random(0, 255)];
+  flowfield = new Array(rows * cols);
+  generateParticles();
 }
 
-function draw(){  
-  for(let i = 0; i < cols; i++) {
-    for(let j = 0; j < rows; j++) {
-      posX = i * scl + xOffset;
-      posY = j * scl + yOffset;
-      fill(col[0] * sin(posX) + 100, col[1] * sin(frameCount/100 + posX/2), col[2] * sin(frameCount/101) + posX/3);
-      // let multiplier = map(posX, 0, windowWidth, 0, 1);
-      let multiplier = sin((posY+posX)/freq + frameCount/speed);
-      circle(posX, posY, maxDiam*multiplier);
+function generateParticles() {
+  particles = [];
+  for(var i = 0; i < fl.numParticles; i++){
+    particles[i] = new Particle(pt.maxSpeed, pt.opacity, pt.stroke);
+  }
+}
+
+function draw(){
+  if(!fl.pause){
+    var yoff = 0;
+
+    for(var y = 0; y < rows; y++){
+      var xoff = 0;
+      for(var x = 0; x < cols; x++){
+        var index = x + y * cols;
+        var angle = noise(xoff, yoff, time) * 2 * TWO_PI;
+        var vect = p5.Vector.fromAngle(angle);
+        vect.setMag(fl.magnitude);
+        flowfield[index] = vect;
+
+        xoff += inc;
+      }
+      yoff += inc;
+
+      time += timeInc;
     }
-  }  
+
+    for(var i = 0; i < particles.length; i++){
+      particles[i].follow(flowfield);
+      particles[i].update();
+      particles[i].edges();
+      particles[i].show();
+    }
+  }
+}
+
+function keyPressed() {
+  if(keyCode === 80){
+    fl.pause = !fl.pause;
+  }
 }
